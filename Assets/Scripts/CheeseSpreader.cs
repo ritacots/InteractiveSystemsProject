@@ -5,7 +5,7 @@ public class CheeseSpreader : MonoBehaviour
     [Header("Disc visual del formatge fos")]
     public GameObject cheeseDisc;
 
-    [Header("Graus totals per completar l'extensió (720 = 2 voltes)")]
+    [Header("Graus totals per completar l'extensiï¿½ (720 = 2 voltes)")]
     public float degreesRequired = 720f;
 
     private float degreesAccumulated = 0f;
@@ -52,9 +52,9 @@ public class CheeseSpreader : MonoBehaviour
         if (cheeseDisc != null)
         {
             cheeseDisc.SetActive(true);
-            cheeseDisc.transform.localScale = new Vector3(0.6f, 0.01f, 0.6f);
+            cheeseDisc.transform.localScale = new Vector3(0.9f, 0.01f, 0.9f);
         }
 
-        Debug.Log("[CheeseSpreader] Formatge estès correctament!");
+        Debug.Log("[CheeseSpreader] Formatge estï¿½s correctament!");
     }
 }

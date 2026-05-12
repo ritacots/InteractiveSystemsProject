@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 public class CheeseGrabber : MonoBehaviour
 {
     [Header("Radis de deteccio")]
@@ -14,25 +13,46 @@ public class CheeseGrabber : MonoBehaviour
     [Header("Referencia al CheeseSpreader (Dough)")]
     public CheeseSpreader myCheeseSpreader;
 
+    [Header("Referencia a la SalsaStation (requerida per posar el formatge)")]
+    public SalsaStation mySalsaStation;
+
+    [Header("Indicador visual de bloqueig (creu o similar)")]
+    public GameObject blockedIndicator;
+
     [Header("Offset del formatge respecte al jugador")]
     public Vector3 cheeseOffset = new Vector3(0.5f, 0f, 0.5f);
+
+    [Header("Soltar el formatge - moviment cap avall brusc")]
+    [Tooltip("Velocitat cap avall (m/s) necessaria per soltar el formatge.")]
+    public float dropVelocityThreshold = 0.8f;
 
     private GameObject heldCheese = null;
     private bool isSpreading = false;
     private Vector3 lastPosition;
-
+    private float lastY;
+    private bool wasBlocked = false;
 
     void Update()
     {
-
         if (heldCheese != null)
         {
+            float velocityY = (transform.position.y - lastY) / Time.deltaTime;
+
+            if (velocityY < -dropVelocityThreshold)
+            {
+                DropCheese();
+                lastY = transform.position.y;
+                return;
+            }
+
             heldCheese.transform.position = new Vector3(
                 transform.position.x + cheeseOffset.x,
-                heldCheese.transform.position.y,
+                transform.position.y + cheeseOffset.y,
                 transform.position.z + cheeseOffset.z
             );
         }
+
+        lastY = transform.position.y;
 
         if (heldCheese == null)
         {
@@ -43,7 +63,6 @@ public class CheeseGrabber : MonoBehaviour
         if (myCheeseSpreader == null)
             return;
 
-        // Spreading already finished: hide the cheese now that spreading is done
         if (myCheeseSpreader.IsSpreadDone)
         {
             ReleaseCheese();
@@ -80,13 +99,12 @@ public class CheeseGrabber : MonoBehaviour
                 heldCheese.SetActive(true);
                 heldCheese.AddComponent<CheeseBeingHeld>();
 
-
                 if (myCheeseSpreader != null && myCheeseSpreader.IsSpreadDone)
-                {
                     myCheeseSpreader.ResetSpreader();
-                }
 
                 isSpreading = false;
+                lastY = transform.position.y;
+                wasBlocked = false;
 
                 if (maOberta != null) maOberta.SetActive(false);
                 if (maTancada != null) maTancada.SetActive(true);
@@ -95,24 +113,48 @@ public class CheeseGrabber : MonoBehaviour
         }
     }
 
-    void ReleaseCheese()
+    void DropCheese()
     {
         if (heldCheese != null)
         {
             CheeseBeingHeld marker = heldCheese.GetComponent<CheeseBeingHeld>();
             if (marker != null) Destroy(marker);
 
-            heldCheese.SetActive(false);
+            heldCheese.transform.position = new Vector3(
+                transform.position.x + cheeseOffset.x,
+                heldCheese.transform.position.y,
+                transform.position.z + cheeseOffset.z
+            );
+
+            heldCheese.SetActive(true);
             heldCheese = null;
         }
 
         isSpreading = false;
-
+        wasBlocked = false;
+        HideBlockedIndicator();
 
         if (maOberta != null) maOberta.SetActive(true);
         if (maTancada != null) maTancada.SetActive(false);
     }
 
+    void ReleaseCheese()
+    {
+        if (heldCheese != null)
+        {
+            CheeseBeingHeld marker = heldCheese.GetComponent<CheeseBeingHeld>();
+            if (marker != null) Destroy(marker);
+            heldCheese.SetActive(false);
+            heldCheese = null;
+        }
+
+        isSpreading = false;
+        wasBlocked = false;
+        HideBlockedIndicator();
+
+        if (maOberta != null) maOberta.SetActive(true);
+        if (maTancada != null) maTancada.SetActive(false);
+    }
 
     void TryStartSpreading()
     {
@@ -122,31 +164,53 @@ public class CheeseGrabber : MonoBehaviour
 
         if (Vector2.Distance(playerXZ, spreaderXZ) <= spreadRadius)
         {
+            if (mySalsaStation != null && !mySalsaStation.IsSalsaDone)
+            {
+                ShowBlockedIndicator();
+                return;
+            }
+
+            HideBlockedIndicator();
             isSpreading = true;
             lastPosition = transform.position;
         }
+        else
+        {
+            HideBlockedIndicator();
+        }
     }
 
+    void ShowBlockedIndicator()
+    {
+        if (blockedIndicator != null)
+            blockedIndicator.SetActive(true);
+
+        wasBlocked = true;
+    }
+
+    void HideBlockedIndicator()
+    {
+        if (blockedIndicator != null)
+            blockedIndicator.SetActive(false);
+
+        wasBlocked = false;
+    }
 
     void DetectCircularMotion()
     {
         Vector3 centre = myCheeseSpreader.transform.position;
 
-        Vector2 prevDir = new Vector2(
-            lastPosition.x - centre.x,
-            lastPosition.z - centre.z).normalized;
+        Vector2 prevDir = new Vector2(lastPosition.x - centre.x, lastPosition.z - centre.z);
+        Vector2 currDir = new Vector2(transform.position.x - centre.x, transform.position.z - centre.z);
 
-        Vector2 currDir = new Vector2(
-            transform.position.x - centre.x,
-            transform.position.z - centre.z).normalized;
+        float signedAngle = Vector2.SignedAngle(prevDir, currDir);
+        float absDeg = Mathf.Abs(signedAngle);
 
-        float angle = Vector2.Angle(prevDir, currDir);
-        if (angle > 0.5f)
-            myCheeseSpreader.AddRotation(angle);
+        if (absDeg > 0.1f)
+            myCheeseSpreader.AddRotation(absDeg);
 
         lastPosition = transform.position;
     }
-
 }
 
 public class CheeseBeingHeld : MonoBehaviour { }
