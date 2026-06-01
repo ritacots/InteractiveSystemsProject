@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: cb0e3990ad1a8884e83bcfb416d13419
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - outputPoint: {instanceID: 0}
+  - cookedPizzaPrefab: {instanceID: 0}
+  - cookTimerText: {instanceID: 0}
+  - cookingIndicator: {instanceID: 0}
+  - doneIndicator: {instanceID: 0}
+  - ovenReadySound: {fileID: 8300000, guid: 29b43a2712d324bb4b4aecb699f32ad9, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
